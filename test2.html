@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>灵魂颜色测试</title>
+    <style>
+        body { margin: 0; font-family: 'PingFang SC', sans-serif; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #fff; overflow: hidden; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .app { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; }
+        .page { position: absolute; width: 100%; height: 100%; padding: 40px; opacity: 0; pointer-events: none; transition: opacity 0.5s; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .page.active { opacity: 1; pointer-events: auto; z-index: 2; }
+        /* 首页 */
+        .glass-card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 30px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0,0,0,0.1); width: 90%; }
+        .title { font-size: 28px; font-weight: 700; margin-bottom: 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .sub { font-size: 14px; opacity: 0.9; margin-bottom: 40px; line-height: 1.6; }
+        .btn { background: #fff; color: #e73c7e; border: none; padding: 15px 40px; border-radius: 50px; font-size: 16px; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        /* 问题页 */
+        .q-box { width: 100%; }
+        .progress-dots { display: flex; gap: 5px; margin-bottom: 30px; justify-content: center; }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: all 0.3s; }
+        .dot.on { background: #fff; width: 20px; border-radius: 10px; }
+        .q-text { font-size: 22px; font-weight: 600; margin-bottom: 40px; text-align: center; min-height: 60px; line-height: 1.4; }
+        .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .opt { background: rgba(255,255,255,0.2); padding: 20px 15px; border-radius: 16px; text-align: center; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+        .opt:active { background: rgba(255,255,255,0.5); transform: scale(0.96); }
+        /* 结果页 */
+        .result-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-radius: 30px; padding: 40px; width: 100%; text-align: center; color: #333; position: relative; overflow: hidden; }
+        .color-orb { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .r-name { font-size: 26px; font-weight: 800; margin-bottom: 5px; }
+        .r-en { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        .r-keys { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .k-tag { background: #f0f0f0; color: #666; padding: 6px 15px; border-radius: 20px; font-size: 12px; }
+        .r-text { font-size: 15px; line-height: 1.7; color: #555; text-align: left; background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 首页 -->
+        <div class="page active" id="home">
+            <div class="glass-card">
+                <div style="font-size:50px; margin-bottom:15px;">✨</div>
+                <h1 class="title">你的灵魂是什么颜色？</h1>
+                <p class="sub">闭上眼，深呼吸。<br>在2026年的开端，找回你丢失的能量。</p>
+                <button class="btn" onclick="start()">开始探索</button>
+            </div>
+        </div>
+        <!-- 答题 -->
+        <div class="page" id="quiz">
+            <div class="q-box">
+                <div class="progress-dots" id="dots"></div>
+                <div class="q-text" id="q"></div>
+                <div class="opts" id="opts"></div>
+            </div>
+        </div>
+        <!-- 结果 -->
+        <div class="page" id="res">
+            <div class="result-card">
+                <div class="color-orb" id="orb"></div>
+                <div class="r-name" id="name"></div>
+                <div class="r-en" id="en"></div>
+                <div class="r-keys" id="keys"></div>
+                <div class="r-text" id="text"></div>
+                <button class="btn" style="margin-top:25px; background:#333; color:#fff;" onclick="location.reload()">重新探索</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const Q = [
+            {q:"1. 想象你走在一片森林，此刻是？", a:["清晨雾气", "正午阳光", "黄昏夕阳", "深夜月光"]},
+            {q:"2. 你最无法忍受的是？", a:["嘈杂拥挤", "虚伪关系", "无休止加班", "平庸生活"]},
+            {q:"3. 选择一种让你平静的元素？", a:["流水声", "燃烧火焰", "微风拂面", "脚下大地"]},
+            {q:"4. 梦中你收到一份礼物，希望是？", a:["秘密日记", "指引明灯", "古堡钥匙", "飞翔翅膀"]},
+            {q:"5. 你觉得自己的直觉通常？", a:["很准", "偶尔准", "需验证", "靠运气"]},
+            {q:"6. 哪种负面情绪最常困扰你？", a:["焦虑", "孤独", "愤怒", "失落"]},
+            {q:"7. 你更倾向于通过什么方式疗愈？", a:["独处", "倾诉", "运动", "购物"]},
+            {q:"8. 你认为“家”应该是？", a:["避风港", "自由空间", "聚会场所", "睡觉地方"]},
+            {q:"9. 你的朋友圈通常发什么？", a:["感悟", "自拍", "热点", "不发"]},
+            {q:"10. 如果有超能力，你希望是？", a:["读心术", "瞬间移动", "时间暂停", "治愈他人"]},
+            {q:"11. 面对选择时，你常？", a:["犹豫", "凭感觉", "理性", "逃避"]},
+            {q:"12. 你最喜欢的天气是？", a:["阴雨", "大雪", "晴天", "多云"]},
+            {q:"13. 哪种声音让你舒适？", a:["海浪", "风铃", "鸟鸣", "音乐"]},
+            {q:"14. 你对待陌生人的态度是？", a:["礼貌疏离", "热情友好", "保持警惕", "看心情"]},
+            {q:"15. 2026年你最想拥有的状态？", a:["内心平静", "事业有成", "恋爱甜蜜", "自由自在"]},
+        ];
+        const R = [
+            {c:"#a18cd1", n:"紫罗兰灵魂", e:"VIOLET", k:["直觉","灵性","神秘"], t:"你拥有极强的第六感和洞察力，常能感知他人无法察觉的细微变化。建议多进行冥想，相信你的直觉，那是宇宙给你的提示。"},
+            {c:"#89f7fe", n:"冰蓝灵魂", e:"ICE BLUE", k:["沟通","清晰","自由"], t:"你渴望自由，需要清晰的表达空间。你的能量容易卡在喉咙区域，建议多唱歌、多表达真实想法。去水边散步能快速恢复你的能量。"},
+            {c:"#ff9a9e", n:"粉晶灵魂", e:"PINK", k:["爱","接纳","温柔"], t:"你天生具有疗愈他人的能力，但往往忽略了自己。你的课题是学会“自爱”。多穿粉色衣物，给自己买花，你的温柔需要带点锋芒。"},
+            {c:"#84fab0", n:"薄荷绿灵魂", e:"MINT", k:["成长","治愈","新生"], t:"你正在经历一个重要的蜕变期。你与大自然的连接很深，当你感到疲惫时，去公园光脚踩踩草地。2026年是你扎根生长的一年。"}
+        ];
+        let idx = 0, score = [0,0,0,0];
+        const $ = id => document.getElementById(id);
+        function start() {
+            $('home').className = 'page';
+            $('quiz').className = 'page active';
+            let dots = '';
+            for(let i=0; i<15; i++) dots += `<div class="dot" id="d${i}"></div>`;
+            $('dots').innerHTML = dots;
+            showQ();
+        }
+        function showQ() {
+            $(`d${idx}`).className = 'dot on';
+            $('q').innerText = Q[idx].q;
+            let h = '';
+            Q[idx].a.forEach((t, i) => { h += `<div class="opt" onclick="next(${i})">${t}</div>`; });
+            $('opts').innerHTML = h;
+        }
+        function next(i) {
+            score[i]++;
+            idx++;
+            if(idx >= 15) showR();
+            else showQ();
+        }
+        function showR() {
+            $('quiz').className = 'page';
+            $('res').className = 'page active';
+            let max = score.indexOf(Math.max(...score));
+            let r = R[max];
+            $('orb').style.background = r.c;
+            $('name').innerText = r.n;
+            $('en').innerText = r.e;
+            $('keys').innerHTML = r.k.map(t=>`<span class="k-tag">${t}</span>`).join('');
+            $('text').innerText = r.t;
+        }
+    </script>
+</body>
+</html>
